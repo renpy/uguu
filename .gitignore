@@ -1,3 +1,2 @@
-__pycache__
-*.pyc
-*.pyo
+gl.c
+gl.pyx

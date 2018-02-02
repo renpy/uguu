@@ -1,4 +1,5 @@
 from xml.etree.ElementTree import parse, tostring
+import collections
 
 # Bad/weird types we don't need or want to generate.
 BAD_TYPES = {
@@ -67,6 +68,11 @@ class XMLToPYX:
 
         self.find_commands()
 
+        # A map from enum name to value.
+        self.enums = collections.OrderedDict()
+
+        self.find_enums()
+
     def extern(self, l):
         self.externs.append(l)
 
@@ -123,7 +129,19 @@ class XMLToPYX:
         for c in commands.findall("command"):
             self.add_command(c)
 
-        print(self.commands)
+    def find_enums(self):
+
+        for enums in self.root.findall("enums"):
+            for i in enums.findall("enum"):
+                value = i.attrib["value"]
+                name = i.attrib["name"]
+
+                self.enums[name] = value
+
+                alias = i.attrib.get("alias", None)
+
+                if alias is not None:
+                    self.enums[alias] = value
 
 
 if __name__ == "__main__":

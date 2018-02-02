@@ -14,11 +14,39 @@ BAD_TYPES = {
     "GLsync",
 }
 
+NOGIL_COMMANDS = {
+    "glClear",
+}
+
 HEADER = """\
 from libc.stdint cimport int64_t, uint64_t
 from libc.stddef cimport ptrdiff_t
 
 """
+
+
+def type_and_name(node):
+    name = node.findtext("name")
+    text = "".join(node.itertext())
+    type_ = text.replace(name, "")
+
+    return type_, name
+
+
+class Command:
+
+    def __init__(self, node):
+        self.return_type = type_and_name(node.find("proto"))[0]
+
+        self.parameters = [ ]
+        self.parameter_types = [ ]
+
+        for i in node.findall("param"):
+            t, n = type_and_name(i)
+            self.parameters.append(n)
+            self.parameter_types.append(t)
+
+        self.aliases = set()
 
 
 class XMLToPYX:
@@ -33,6 +61,11 @@ class XMLToPYX:
         print(HEADER)
 
         self.generate_externs()
+
+        # A map from command name to command.
+        self.commands = { }
+
+        self.find_commands()
 
     def extern(self, l):
         self.externs.append(l)
@@ -64,6 +97,33 @@ class XMLToPYX:
             text = text.replace("typedef", "ctypedef")
 
             self.extern(text)
+
+    def add_command(self, node):
+        name = type_and_name(node.find("proto"))[1]
+
+        names = [ name ]
+
+        for i in node.findall("alias"):
+            names.append(i.attrib["name"])
+
+        for i in names:
+            c = self.commands.get(i, None)
+            if c is not None:
+                break
+        else:
+            c = Command(node)
+
+        for i in names:
+            c.aliases.add(i)
+            self.commands[i] = c
+
+    def find_commands(self):
+        commands = self.root.find("commands")
+
+        for c in commands.findall("command"):
+            self.add_command(c)
+
+        print(self.commands)
 
 
 if __name__ == "__main__":

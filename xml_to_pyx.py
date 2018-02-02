@@ -1,5 +1,6 @@
 from xml.etree.ElementTree import parse, tostring
 import collections
+import itertools
 
 # Bad/weird types we don't need or want to generate.
 BAD_TYPES = {
@@ -50,6 +51,21 @@ class Command:
         self.aliases = set()
 
 
+class Feature:
+
+    def __init__(self):
+        self.commands = set()
+        self.enums = set()
+
+    def from_node(self, node):
+
+        for i in node.findall("require/enum"):
+            self.enums.add(i.attrib["name"])
+
+        for i in node.findall("require/command"):
+            self.commands.add(i.attrib["name"])
+
+
 class XMLToPYX:
 
     def __init__(self):
@@ -72,6 +88,11 @@ class XMLToPYX:
         self.enums = collections.OrderedDict()
 
         self.find_enums()
+
+        # A map from feature name to value.
+        self.features = { }
+
+        self.find_features()
 
     def extern(self, l):
         self.externs.append(l)
@@ -142,6 +163,21 @@ class XMLToPYX:
 
                 if alias is not None:
                     self.enums[alias] = value
+
+    def find_features(self):
+
+        for i in itertools.chain(
+                self.root.findall("feature"),
+                self.root.findall("extensions/extension")
+                ):
+
+            name = i.attrib["name"]
+
+            f = Feature()
+            f.from_node(i)
+            self.features[name] = f
+
+            print(name)
 
 
 if __name__ == "__main__":

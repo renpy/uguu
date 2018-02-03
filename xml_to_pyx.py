@@ -26,6 +26,22 @@ from libc.stddef cimport ptrdiff_t
 
 """
 
+GL_FEATURES = [
+    "GL_VERSION_1_0",
+    "GL_VERSION_1_1",
+    "GL_VERSION_1_2",
+    "GL_VERSION_1_3",
+    "GL_VERSION_1_4",
+    "GL_VERSION_1_5",
+    "GL_VERSION_2_0",
+    "GL_VERSION_2_1",
+    "GL_VERSION_3_0",
+    ]
+
+GLES_FEATURES = [
+    "GL_ES_VERSION_2_0",
+    ]
+
 
 def type_and_name(node):
     name = node.findtext("name")
@@ -65,6 +81,18 @@ class Feature:
         for i in node.findall("require/command"):
             self.commands.add(i.attrib["name"])
 
+    def __or__(self, other):
+        rv = Feature()
+        rv.commands = self.commands | other.commands
+        rv.enums = self.enums | other.enums
+        return rv
+
+    def __and__(self, other):
+        rv = Feature()
+        rv.commands = self.commands & other.commands
+        rv.enums = self.enums & other.enums
+        return rv
+
 
 class XMLToPYX:
 
@@ -76,8 +104,6 @@ class XMLToPYX:
         self.convert_types()
 
         print(HEADER)
-
-        self.generate_externs()
 
         # A map from command name to command.
         self.commands = { }
@@ -93,6 +119,10 @@ class XMLToPYX:
         self.features = { }
 
         self.find_features()
+        self.select_features()
+
+        self.generate_externs()
+        self.generate_enums()
 
     def extern(self, l):
         self.externs.append(l)
@@ -177,7 +207,34 @@ class XMLToPYX:
             f.from_node(i)
             self.features[name] = f
 
-            print(name)
+            # print(name)
+
+    def select_features(self):
+
+        gl = Feature()
+
+        for i in GL_FEATURES:
+            gl = gl | self.features[i]
+
+        gles = Feature()
+
+        for i in GLES_FEATURES:
+            gles = gles | self.features[i]
+
+        f = gl & gles
+
+        self.features = f
+
+    def generate_enums(self):
+
+        enums = list(self.features.enums)
+        enums.sort(key=lambda n : int(self.enums[n], 0))
+
+        print()
+
+        for i in enums:
+
+            print("cdef public GLenum {} = {}".format(i, self.enums[i]))
 
 
 if __name__ == "__main__":

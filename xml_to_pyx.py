@@ -20,9 +20,15 @@ NOGIL_COMMANDS = {
     "glClear",
 }
 
-HEADER = """\
+PXD_HEADER = """\
 from libc.stdint cimport int64_t, uint64_t
 from libc.stddef cimport ptrdiff_t
+
+"""
+
+PYX_HEADER = """\
+print(GL_TEXTURE)
+
 
 """
 
@@ -99,11 +105,9 @@ class XMLToPYX:
     def __init__(self):
         self.root = parse("gl.xml").getroot()
 
-        self.externs = [ ]
+        self.types = [ ]
 
         self.convert_types()
-
-        print(HEADER)
 
         # A map from command name to command.
         self.commands = { }
@@ -121,17 +125,11 @@ class XMLToPYX:
         self.find_features()
         self.select_features()
 
-        self.generate_externs()
-        self.generate_enums()
+        with open("gl.pxd", "w") as f:
+            self.generate_pxd(f)
 
-    def extern(self, l):
-        self.externs.append(l)
-
-    def generate_externs(self):
-        print('cdef extern from "renpygl.h":')
-
-        for l in self.externs:
-            print("    " + l)
+        with open("gl.pyx", "w") as f:
+            self.generate_pyx(f)
 
     def convert_types(self):
         types = self.root.find('types')
@@ -153,7 +151,7 @@ class XMLToPYX:
             text = text.replace(";", "")
             text = text.replace("typedef", "ctypedef")
 
-            self.extern(text)
+            self.types.append(text)
 
     def add_command(self, node):
         name = type_and_name(node.find("proto"))[1]
@@ -225,16 +223,29 @@ class XMLToPYX:
 
         self.features = f
 
-    def generate_enums(self):
+    def generate_pxd(self, f):
+
+        f.write(PXD_HEADER)
+
+        print('cdef extern from "renpygl.h":', file=f)
+        print(file=f)
+
+        for l in self.types:
+            print("    " + l, file=f)
+
+        print(file=f)
 
         enums = list(self.features.enums)
         enums.sort(key=lambda n : int(self.enums[n], 0))
 
-        print()
+        print(file=f)
 
         for i in enums:
+            print("    GLenum " + i, file=f)
 
-            print("cdef public GLenum {} = {}".format(i, self.enums[i]))
+    def generate_pyx(self, f):
+
+        f.write(PYX_HEADER)
 
 
 if __name__ == "__main__":

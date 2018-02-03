@@ -1,2 +1,8 @@
+*.so
 gl.c
 gl.pyx
+gl.pxd
+build
+
+.project
+.pydevproject

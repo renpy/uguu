@@ -2,6 +2,7 @@
 gl.c
 gl.pyx
 gl.pxd
+testsupport.c
 build
 
 .project

@@ -1,1 +1,3 @@
-import gl
+import testsupport
+
+testsupport.init()

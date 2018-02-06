@@ -10,7 +10,7 @@ uguu = Extension(
 testsupport = Extension(
     "testsupport",
     [ "testsupport.c" ],
-    libraries=[ "SDL2" ],
+    libraries=[ "SDL2", ],
     include_dirs=[ "/usr/include/SDL2" ],
     )
 

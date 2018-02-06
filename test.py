@@ -1,3 +1,3 @@
 import testsupport
 
-testsupport.init()
+testsupport.main()

@@ -1,8 +1,9 @@
 from __future__ import print_function
 from libc.stdio cimport printf
 
-from sdl2 cimport *
+import argparse
 
+from sdl2 cimport *
 
 ctypedef unsigned char *(*GetString)(unsigned int)
 
@@ -57,10 +58,22 @@ def main():
 
     cdef SDL_GLContext glc
 
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--egl", action="store_true")
+    args = ap.parse_args()
+
 
     SDL_Init(SDL_INIT_VIDEO)
 
-    # SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES)
+    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+
+    if args.egl:
+        SDL_SetHint("SDL_OPENGL_ES_DRIVER", "1")
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES)
 
     window = SDL_CreateWindow("UGUU Test Window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 400, 400, SDL_WINDOW_OPENGL)
 

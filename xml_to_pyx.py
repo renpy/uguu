@@ -16,8 +16,10 @@ BAD_TYPES = {
     "GLsync",
 }
 
-NOGIL_COMMANDS = {
-    "glClear",
+
+BAD_COMMANDS = {
+    "glAttachObjectARB",
+    "glDetachObjectARB",
 }
 
 PXD_HEADER = """\
@@ -51,8 +53,8 @@ GLES_FEATURES = [
 
 def type_and_name(node):
     name = node.findtext("name")
-    text = "".join(node.itertext())
-    type_ = text.replace(name, "")
+    text = "".join(node.itertext()).strip()
+    type_ = text[:-len(name)]
 
     return type_, name
 
@@ -71,6 +73,17 @@ class Command:
             self.parameter_types.append(t)
 
         self.aliases = set()
+
+    def format_param_list(self):
+        l = [ ]
+
+        for name, type_ in zip(self.parameters, self.parameter_types):
+            l.append("{} {}".format(type_, name))
+
+        return "(" + ", ".join(l) + ")"
+
+    def typedef(self, name):
+        return "ctypedef {} (*{}){} nogil".format(self.return_type, name, self.format_param_list())
 
 
 class Feature:
@@ -155,6 +168,9 @@ class XMLToPYX:
 
     def add_command(self, node):
         name = type_and_name(node.find("proto"))[1]
+
+        if name in BAD_COMMANDS:
+            return
 
         names = [ name ]
 
@@ -242,6 +258,14 @@ class XMLToPYX:
 
         for i in enums:
             print("    GLenum " + i, file=f)
+
+        for i in sorted(self.features.commands):
+            typename = i + "_type"
+            c = self.commands[i]
+
+            print(file=f)
+            print(c.typedef(typename), file=f)
+            print("cdef {} {}".format(typename, i), file=f)
 
     def generate_pyx(self, f):
 

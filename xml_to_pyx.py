@@ -29,8 +29,18 @@ from libc.stddef cimport ptrdiff_t
 """
 
 PYX_HEADER = """\
-print(GL_TEXTURE)
+from sdl2 cimport SDL_GL_GetProcAddress
 
+cdef void *find_gl_command(names):
+
+    cdef void *rv = NULL
+
+    for i in names:
+        rv = SDL_GL_GetProcAddress(i)
+        if rv != NULL:
+            return rv
+
+    raise Exception("{} not found.".format(names[0]))
 
 """
 
@@ -270,6 +280,22 @@ class XMLToPYX:
     def generate_pyx(self, f):
 
         f.write(PYX_HEADER)
+
+        for i in sorted(self.features.commands):
+            print("cdef {}_type {}".format(i, i), file=f)
+
+        print("def load():", file=f)
+
+        for i in sorted(self.features.commands):
+
+            names = list(self.commands[i].aliases)
+            names.remove(i)
+            names.insert(0, i)
+
+            names = [ i.encode("utf-8") for i in names ]
+
+            print("    global {i}".format(i=i), file=f)
+            print("    {i} = <{i}_type> find_gl_command({names!r})".format(i=i, names=names), file=f)
 
 
 if __name__ == "__main__":

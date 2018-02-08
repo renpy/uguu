@@ -4,48 +4,50 @@ from libc.stdio cimport printf
 import argparse
 
 from sdl2 cimport *
+from gl cimport *
+from gl import load
 
-ctypedef unsigned char *(*GetString)(unsigned int)
-
-cdef extern from "GL/gl.h":
-    ctypedef unsigned int GLenum
-    ctypedef unsigned char GLboolean
-    ctypedef unsigned int GLbitfield
-    ctypedef void GLvoid
-    ctypedef signed char GLbyte
-    ctypedef short GLshort
-    ctypedef int GLint
-    ctypedef int GLclampx
-    ctypedef unsigned char GLubyte
-    ctypedef unsigned short GLushort
-    ctypedef unsigned int GLuint
-    ctypedef int GLsizei
-    ctypedef float GLfloat
-    ctypedef float GLclampf
-    ctypedef double GLdouble
-    ctypedef double GLclampd
-    ctypedef void *GLeglClientBufferEXT
-    ctypedef void *GLeglImageOES
-    ctypedef char GLchar
-    ctypedef char GLcharARB
-    ctypedef unsigned short GLhalfARB
-    ctypedef unsigned short GLhalf
-    ctypedef GLint GLfixed
-    ctypedef ptrdiff_t GLintptr
-    ctypedef ptrdiff_t GLsizeiptr
-    ctypedef int64_t GLint64
-    ctypedef uint64_t GLuint64
-    ctypedef ptrdiff_t GLintptrARB
-    ctypedef ptrdiff_t GLsizeiptrARB
-    ctypedef int64_t GLint64EXT
-    ctypedef uint64_t GLuint64EXT
-
-
-    GLubyte *glGetString(GLenum)
-    GLenum glGetError()
-
-    enum:
-        GL_VERSION
+# ctypedef unsigned char *(*GetString)(unsigned int)
+#
+# cdef extern from "GL/gl.h":
+#     ctypedef unsigned int GLenum
+#     ctypedef unsigned char GLboolean
+#     ctypedef unsigned int GLbitfield
+#     ctypedef void GLvoid
+#     ctypedef signed char GLbyte
+#     ctypedef short GLshort
+#     ctypedef int GLint
+#     ctypedef int GLclampx
+#     ctypedef unsigned char GLubyte
+#     ctypedef unsigned short GLushort
+#     ctypedef unsigned int GLuint
+#     ctypedef int GLsizei
+#     ctypedef float GLfloat
+#     ctypedef float GLclampf
+#     ctypedef double GLdouble
+#     ctypedef double GLclampd
+#     ctypedef void *GLeglClientBufferEXT
+#     ctypedef void *GLeglImageOES
+#     ctypedef char GLchar
+#     ctypedef char GLcharARB
+#     ctypedef unsigned short GLhalfARB
+#     ctypedef unsigned short GLhalf
+#     ctypedef GLint GLfixed
+#     ctypedef ptrdiff_t GLintptr
+#     ctypedef ptrdiff_t GLsizeiptr
+#     ctypedef int64_t GLint64
+#     ctypedef uint64_t GLuint64
+#     ctypedef ptrdiff_t GLintptrARB
+#     ctypedef ptrdiff_t GLsizeiptrARB
+#     ctypedef int64_t GLint64EXT
+#     ctypedef uint64_t GLuint64EXT
+#
+#
+#     GLubyte *glGetString(GLenum)
+#     GLenum glGetError()
+#
+#     enum:
+#         GL_VERSION
 
 
 def main():
@@ -53,7 +55,7 @@ def main():
     cdef SDL_Window *window
     cdef SDL_Event event
 
-    cdef GetString gl_get_string
+#     cdef GetString gl_get_string
     cdef unsigned char *buf
 
     cdef SDL_GLContext glc
@@ -78,11 +80,14 @@ def main():
     window = SDL_CreateWindow("UGUU Test Window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 400, 400, SDL_WINDOW_OPENGL)
 
     glc = SDL_GL_CreateContext(window);
-    print("ERROR", SDL_GetError())
 
-    get_string = <GetString> SDL_GL_GetProcAddress("glGetString")
+    load()
 
-    buf = get_string(GL_VERSION)
+
+
+#     get_string = <GetString> SDL_GL_GetProcAddress("glGetString")
+
+    buf = glGetString(GL_VERSION)
     print("VERSION", buf)
 
     while True:

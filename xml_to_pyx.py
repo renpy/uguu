@@ -88,7 +88,7 @@ class Command:
         l = [ ]
 
         for name, type_ in zip(self.parameters, self.parameter_types):
-            l.append("{} {}".format(type_, name))
+            l.append(f"{type_} {name}")
 
         return "(" + ", ".join(l) + ")"
 
@@ -275,15 +275,15 @@ class XMLToPYX:
 
             print(file=f)
             print(c.typedef(typename), file=f)
-            print("cdef {} {}".format(typename, i), file=f)
+            print(f"cdef {typename} {i}", file=f)
 
     def generate_pyx(self, f):
 
         f.write(PYX_HEADER)
 
         for i in sorted(self.features.commands):
-            print("cdef {}_type real_{}".format(i, i), file=f)
-            print("cdef {}_type {}".format(i, i), file=f)
+            print(f"cdef {i}_type real_{i}", file=f)
+            print(f"cdef {i}_type {i}", file=f)
 
         print("def load():", file=f)
 
@@ -295,10 +295,10 @@ class XMLToPYX:
 
             names = [ i.encode("utf-8") for i in names ]
 
-            print("", file=f)
-            print("    global real_{i}, {i}".format(i=i), file=f)
-            print("    real_{i} = <{i}_type> find_gl_command({names!r})".format(i=i, names=names), file=f)
-            print("    {i} = real_{i}".format(i=i), file=f)
+            print(f"", file=f)
+            print(f"    global real_{i}, {i}", file=f)
+            print(f"    real_{i} = <{i}_type> find_gl_command({names!r})", file=f)
+            print(f"    {i} = real_{i}", file=f)
 
 
 if __name__ == "__main__":

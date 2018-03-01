@@ -1,3 +1,0 @@
-import testsupport
-
-testsupport.main()

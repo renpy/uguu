@@ -7,3 +7,5 @@ build
 
 .project
 .pydevproject
+.pytest_cache/
+__pycache__

@@ -7,7 +7,5 @@ cython gl.pyx
 cython testsupport.pyx
 
 python3 setup.py build_ext -i -q
-
-
-python3 test.py "$@"
+python3 -m pytest "$@"
 

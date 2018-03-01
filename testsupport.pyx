@@ -4,73 +4,64 @@ from libc.stdio cimport printf
 import argparse
 
 from sdl2 cimport *
-from gl cimport *
-from gl import load, enable_check_error, get_error, reset_error
+cimport gl
 
 
-def main():
+cdef class SDL:
 
     cdef SDL_Window *window
-    cdef SDL_Event event
-
-    cdef unsigned char *buf
-
     cdef SDL_GLContext glc
 
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--egl", action="store_true")
-    ap.add_argument("--check", action="store_true")
-    args = ap.parse_args()
+
+    def init(self):
+        SDL_Init(SDL_INIT_VIDEO)
+
+    def open_window(self, egl):
 
 
-    SDL_Init(SDL_INIT_VIDEO)
+        SDL_GL_ResetAttributes()
 
-    SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-    SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
+        SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+        SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+        SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+        SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 
-    if args.egl:
-        SDL_SetHint("SDL_OPENGL_ES_DRIVER", "1")
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES)
-
-    window = SDL_CreateWindow("UGUU Test Window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 400, 400, SDL_WINDOW_OPENGL)
-
-    glc = SDL_GL_CreateContext(window);
-
-    load()
-
-    if args.check:
-        enable_check_error()
+        if egl:
+            SDL_SetHint("SDL_OPENGL_ES_DRIVER", "1")
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES)
+        else:
+            SDL_SetHint("SDL_OPENGL_ES_DRIVER", "0")
 
 
-    print("Start", get_error())
+        self.window = SDL_CreateWindow("UGUU Test Window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 400, 400, SDL_WINDOW_OPENGL)
+        self.glc = SDL_GL_CreateContext(self.window);
 
-    buf = glGetString(GL_VERSION)
-    print("VERSION", buf)
+    def close_window(self):
 
-    print("After version", get_error())
+        SDL_GL_DeleteContext(self.glc)
+        SDL_DestroyWindow(self.window)
 
-    buf = glGetString(GL_TEXTURE_2D)
+    def wait_quit(self):
 
-    print("After bad get.", get_error())
-
-    reset_error()
-
-    print("After reset.", get_error())
-
-
-
-    while True:
+        cdef SDL_Event event
 
         if SDL_WaitEventTimeout(&event, 200):
 
             if event.type == SDL_QUIT:
-                break
+                return
 
 
+GL_VERSION = gl.GL_VERSION
+GL_TEXTURE_2D = gl.GL_TEXTURE_2D
 
+def glGetString(n):
+    cdef const char *rv
 
+    rv = <const char *> gl.glGetString(n)
 
+    if rv:
+        return rv
+    else:
+        return None
 

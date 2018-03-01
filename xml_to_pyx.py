@@ -42,6 +42,9 @@ cdef void *find_gl_command(names):
 
     raise Exception("{} not found.".format(names[0]))
 
+cdef void check_error(const char *fn) nogil:
+    return
+
 """
 
 GL_FEATURES = [
@@ -72,7 +75,7 @@ def type_and_name(node):
 class Command:
 
     def __init__(self, node):
-        self.return_type = type_and_name(node.find("proto"))[0]
+        self.return_type = type_and_name(node.find("proto"))[0].strip()
 
         self.parameters = [ ]
         self.parameter_types = [ ]
@@ -91,6 +94,9 @@ class Command:
             l.append(f"{type_} {name}")
 
         return "(" + ", ".join(l) + ")"
+
+    def format_proxy_call(self):
+        return "(" + ", ".join(self.parameters) + ")"
 
     def typedef(self, name):
         return "ctypedef {} (*{}){} nogil".format(self.return_type, name, self.format_param_list())
@@ -288,9 +294,32 @@ class XMLToPYX:
             f.write(s + "\n")
 
         for i in sorted(self.features.commands):
+            c = self.commands[i]
+
+            w("")
             w(f"cdef {i}_type real_{i}")
             w(f"cdef {i}_type {i}")
 
+            w("")
+
+            param_list = c.format_param_list()
+            proxy_call = c.format_proxy_call()
+
+            if c.return_type != "void":
+
+                w(f'cdef {c.return_type} check_{i}{param_list} nogil:')
+                w(f'    cdef {c.return_type} rv')
+                w(f'    rv = real_{i}{proxy_call}')
+                w(f'    check_error("{i}")')
+                w(f'    return rv')
+
+            else:
+
+                w(f'cdef {c.return_type} check_{i}{param_list} nogil:')
+                w(f'    real_{i}{proxy_call}')
+                w(f'    check_error("{i}")')
+
+        w("")
         w("def load():")
 
         for i in sorted(self.features.commands):

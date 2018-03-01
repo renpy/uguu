@@ -253,11 +253,14 @@ class XMLToPYX:
 
         f.write(PXD_HEADER)
 
-        print('cdef extern from "renpygl.h":', file=f)
-        print(file=f)
+        def w(s):
+            f.write(s + "\n")
+
+        w('cdef extern from "renpygl.h":')
+        w('')
 
         for l in self.types:
-            print("    " + l, file=f)
+            w(f"    {l}")
 
         print(file=f)
 
@@ -267,25 +270,28 @@ class XMLToPYX:
         print(file=f)
 
         for i in enums:
-            print("    GLenum " + i, file=f)
+            w(f"    GLenum {i}")
 
         for i in sorted(self.features.commands):
             typename = i + "_type"
             c = self.commands[i]
 
-            print(file=f)
-            print(c.typedef(typename), file=f)
-            print(f"cdef {typename} {i}", file=f)
+            w("")
+            w(c.typedef(typename))
+            w(f"cdef {typename} {i}")
 
     def generate_pyx(self, f):
 
         f.write(PYX_HEADER)
 
-        for i in sorted(self.features.commands):
-            print(f"cdef {i}_type real_{i}", file=f)
-            print(f"cdef {i}_type {i}", file=f)
+        def w(s):
+            f.write(s + "\n")
 
-        print("def load():", file=f)
+        for i in sorted(self.features.commands):
+            w(f"cdef {i}_type real_{i}")
+            w(f"cdef {i}_type {i}")
+
+        w("def load():")
 
         for i in sorted(self.features.commands):
 
@@ -295,10 +301,10 @@ class XMLToPYX:
 
             names = [ i.encode("utf-8") for i in names ]
 
-            print(f"", file=f)
-            print(f"    global real_{i}, {i}", file=f)
-            print(f"    real_{i} = <{i}_type> find_gl_command({names!r})", file=f)
-            print(f"    {i} = real_{i}", file=f)
+            w(f"")
+            w(f"    global real_{i}, {i}")
+            w(f"    real_{i} = <{i}_type> find_gl_command({names!r})")
+            w(f"    {i} = real_{i}")
 
 
 if __name__ == "__main__":

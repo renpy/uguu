@@ -5,7 +5,7 @@ import argparse
 
 from sdl2 cimport *
 from gl cimport *
-from gl import load, enable_check_error
+from gl import load, enable_check_error, get_error, reset_error
 
 
 def main():
@@ -44,8 +44,23 @@ def main():
     if args.check:
         enable_check_error()
 
+
+    print("Start", get_error())
+
     buf = glGetString(GL_VERSION)
     print("VERSION", buf)
+
+    print("After version", get_error())
+
+    buf = glGetString(GL_TEXTURE_2D)
+
+    print("After bad get.", get_error())
+
+    reset_error()
+
+    print("After reset.", get_error())
+
+
 
     while True:
 

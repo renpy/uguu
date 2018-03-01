@@ -5,49 +5,7 @@ import argparse
 
 from sdl2 cimport *
 from gl cimport *
-from gl import load
-
-# ctypedef unsigned char *(*GetString)(unsigned int)
-#
-# cdef extern from "GL/gl.h":
-#     ctypedef unsigned int GLenum
-#     ctypedef unsigned char GLboolean
-#     ctypedef unsigned int GLbitfield
-#     ctypedef void GLvoid
-#     ctypedef signed char GLbyte
-#     ctypedef short GLshort
-#     ctypedef int GLint
-#     ctypedef int GLclampx
-#     ctypedef unsigned char GLubyte
-#     ctypedef unsigned short GLushort
-#     ctypedef unsigned int GLuint
-#     ctypedef int GLsizei
-#     ctypedef float GLfloat
-#     ctypedef float GLclampf
-#     ctypedef double GLdouble
-#     ctypedef double GLclampd
-#     ctypedef void *GLeglClientBufferEXT
-#     ctypedef void *GLeglImageOES
-#     ctypedef char GLchar
-#     ctypedef char GLcharARB
-#     ctypedef unsigned short GLhalfARB
-#     ctypedef unsigned short GLhalf
-#     ctypedef GLint GLfixed
-#     ctypedef ptrdiff_t GLintptr
-#     ctypedef ptrdiff_t GLsizeiptr
-#     ctypedef int64_t GLint64
-#     ctypedef uint64_t GLuint64
-#     ctypedef ptrdiff_t GLintptrARB
-#     ctypedef ptrdiff_t GLsizeiptrARB
-#     ctypedef int64_t GLint64EXT
-#     ctypedef uint64_t GLuint64EXT
-#
-#
-#     GLubyte *glGetString(GLenum)
-#     GLenum glGetError()
-#
-#     enum:
-#         GL_VERSION
+from gl import load, enable_check_error
 
 
 def main():
@@ -55,13 +13,13 @@ def main():
     cdef SDL_Window *window
     cdef SDL_Event event
 
-#     cdef GetString gl_get_string
     cdef unsigned char *buf
 
     cdef SDL_GLContext glc
 
     ap = argparse.ArgumentParser()
     ap.add_argument("--egl", action="store_true")
+    ap.add_argument("--check", action="store_true")
     args = ap.parse_args()
 
 
@@ -83,9 +41,8 @@ def main():
 
     load()
 
-
-
-#     get_string = <GetString> SDL_GL_GetProcAddress("glGetString")
+    if args.check:
+        enable_check_error()
 
     buf = glGetString(GL_VERSION)
     print("VERSION", buf)

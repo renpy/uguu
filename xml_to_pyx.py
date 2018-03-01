@@ -335,6 +335,13 @@ class XMLToPYX:
             w(f"    real_{i} = <{i}_type> find_gl_command({names!r})")
             w(f"    {i} = real_{i}")
 
+        w("")
+        w("def enable_check_error():")
+
+        for i in sorted(self.features.commands):
+            w(f"    global {i}")
+            w(f"    {i} = check_{i}")
+
 
 if __name__ == "__main__":
     XMLToPYX()

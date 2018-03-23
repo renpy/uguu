@@ -1,6 +1,7 @@
 from xml.etree.ElementTree import parse, tostring
 import collections
 import itertools
+import os
 
 # Bad/weird types we don't need or want to generate.
 BAD_TYPES = {
@@ -22,62 +23,14 @@ BAD_COMMANDS = {
     "glDetachObjectARB",
 }
 
-PXD_HEADER = """\
-from libc.stdint cimport int64_t, uint64_t
-from libc.stddef cimport ptrdiff_t
 
-"""
-
-PYX_HEADER = """\
-from sdl2 cimport SDL_GL_GetProcAddress
-
-cdef void *find_gl_command(names):
-
-    cdef void *rv = NULL
-
-    for i in names:
-        rv = SDL_GL_GetProcAddress(i)
-        if rv != NULL:
-            return rv
-
-    raise Exception("{} not found.".format(names[0]))
+def snarf(fn):
+    with open(os.path.join(os.path.dirname(__file__), fn)) as f:
+        return f.read() + "\n"
 
 
-cdef const char *error_function
-cdef GLenum error_code
-
-def reset_error():
-    global error_function
-    error_function = NULL
-
-    global error_code
-    error_code = GL_NO_ERROR
-
-reset_error()
-
-def get_error():
-
-    if error_function != NULL:
-        return error_function.decode("utf-8"), error_code
-    else:
-        return None, GL_NO_ERROR
-
-from libc.stdio cimport printf
-
-cdef void check_error(const char *function) nogil:
-
-    global error_function
-    global error_code
-
-    cdef GLenum error
-
-    error = real_glGetError()
-
-    if (error_function == NULL) and (error != GL_NO_ERROR):
-        error_function = function
-        error_code = error
-
-"""
+PXD_HEADER = snarf("pxd_header.pxd")
+PYX_HEADER = snarf("pyx_header.pyx")
 
 GL_FEATURES = [
     "GL_VERSION_1_0",

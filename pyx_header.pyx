@@ -46,3 +46,10 @@ cdef void check_error(const char *function) nogil:
         error_function = function
         error_code = error
 
+cdef class pointer_wrapper:
+
+    cdef void *ptr
+
+    def __cinit__(self, o):
+        ptr = NULL
+

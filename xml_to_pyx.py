@@ -57,6 +57,17 @@ def type_and_name(node):
     return type_, name
 
 
+def python_type(t):
+    """
+    Converts the OpenGL type t into a Python type.
+    """
+
+    if not "*" in t:
+        return t
+
+    print("Weird type", t)
+
+
 class Command:
 
     def __init__(self, node):
@@ -326,6 +337,35 @@ class XMLToPYX:
         for i in sorted(self.features.commands):
             w(f"    global {i}")
             w(f"    {i} = check_{i}")
+
+        # Generate the proxies.
+
+        for i in sorted(self.features.commands):
+            c = self.commands[i]
+
+            params = list(zip(c.parameters, c.parameter_types))
+            param_list = ", ".join(c.parameters)
+
+            w(f"def proxy_{i}({param_list}):")
+
+            for param, type_ in params:
+                if "*" in type_:
+                    w(f"    cdef pointer_wrapper {param}_wrapped = pointer_wrapper({param})")
+
+            proxy = [ ]
+
+            for param, type_ in params:
+                if "*" in type_:
+                    proxy.append(f"<{type_}> {param}_wrapped.ptr")
+                else:
+                    proxy.append(param)
+
+            proxy = ", ".join(proxy)
+
+            w(f'    return {i}({proxy})')
+            w(f'')
+            w(f'globals()["{i}"] = proxy_{i}')
+            w(f'')
 
 
 if __name__ == "__main__":

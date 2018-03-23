@@ -28,7 +28,7 @@ def test_no_checking(context):
 
     assert gl.get_error() == NO_ERROR
 
-    version = testsupport.glGetString(testsupport.GL_VERSION)
+    version = gl.glGetString(gl.GL_VERSION)
 
     assert version
 
@@ -39,7 +39,7 @@ def test_no_checking(context):
 
     assert gl.get_error() == NO_ERROR
 
-    testsupport.glGetString(testsupport.GL_TEXTURE_2D)
+    gl.glGetString(gl.GL_TEXTURE_2D)
 
     assert gl.get_error() == NO_ERROR
 
@@ -52,7 +52,7 @@ def test_checking(context):
 
     assert gl.get_error() == NO_ERROR
 
-    version = testsupport.glGetString(testsupport.GL_VERSION)
+    version = gl.glGetString(gl.GL_VERSION)
 
     assert version
 
@@ -63,7 +63,7 @@ def test_checking(context):
 
     assert gl.get_error() == NO_ERROR
 
-    testsupport.glGetString(testsupport.GL_TEXTURE_2D)
+    gl.glGetString(gl.GL_TEXTURE_2D)
 
     assert gl.get_error() ==  ('glGetString', 1280)
 

@@ -264,12 +264,10 @@ class XMLToPYX:
         for l in self.types:
             w(f"    {l}")
 
-        print(file=f)
-
         enums = list(self.features.enums)
         enums.sort(key=lambda n : int(self.enums[n], 0))
 
-        print(file=f)
+        w(f'')
 
         for i in enums:
             w(f"    GLenum {i}")
@@ -340,6 +338,10 @@ class XMLToPYX:
 
         # Generate the proxies.
 
+        w(f'')
+        w(f'g = globals()')
+        w(f'')
+
         for i in sorted(self.features.commands):
             c = self.commands[i]
 
@@ -362,10 +364,31 @@ class XMLToPYX:
 
             proxy = ", ".join(proxy)
 
-            w(f'    return {i}({proxy})')
+            rt = c.return_type.strip()
+
+            if rt == "void":
+                w(f'    {i}({proxy})')
+            elif rt == "const GLubyte *":
+                w(f'    return proxy_return_string({i}({proxy}))')
+            else:
+                w(f'    return {i}({proxy})')
+
             w(f'')
-            w(f'globals()["{i}"] = proxy_{i}')
+            w(f'g["{i}"] = proxy_{i}')
             w(f'')
+
+        # Expose the enums to python.
+
+        enums = list(self.features.enums)
+        enums.sort(key=lambda n : int(self.enums[n], 0))
+
+        w(f'')
+
+        for i in enums:
+            w(f'g["{i}"] = {i}')
+
+        w(f'')
+        w(f'del g')
 
 
 if __name__ == "__main__":

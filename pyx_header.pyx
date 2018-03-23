@@ -53,3 +53,11 @@ cdef class pointer_wrapper:
     def __cinit__(self, o):
         ptr = NULL
 
+cdef object proxy_return_string(const GLubyte *s):
+
+    cdef const char *ss = <const char *> s
+
+    if ss:
+        return ss
+    else:
+        return None

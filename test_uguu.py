@@ -79,3 +79,8 @@ def test_good_ptr():
 def test_bad_ptr():
     with pytest.raises(TypeError):
         gl.ptr(42)
+
+
+def test_buffer():
+
+    gl.ptr(gl.BytesListBuffer([ b'foo' ]))

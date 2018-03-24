@@ -35,7 +35,14 @@ cdef class SDL:
 
 
         self.window = SDL_CreateWindow("UGUU Test Window", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 400, 400, SDL_WINDOW_OPENGL)
+
+        if not self.window:
+            raise Exception("Creating the window failed.")
+
         self.glc = SDL_GL_CreateContext(self.window);
+
+        if not self.glc:
+            raise Exception("Creating GL context failed.")
 
     def close_window(self):
 

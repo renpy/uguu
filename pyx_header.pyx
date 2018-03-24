@@ -1,4 +1,6 @@
 from sdl2 cimport SDL_GL_GetProcAddress
+from libc.stdio cimport printf
+from cpython.buffer cimport PyObject_GetBuffer, PyBuffer_Release, PyBUF_CONTIG, PyBUF_CONTIG_RO
 
 cdef void *find_gl_command(names):
 
@@ -6,6 +8,7 @@ cdef void *find_gl_command(names):
 
     for i in names:
         rv = SDL_GL_GetProcAddress(i)
+
         if rv != NULL:
             return rv
 
@@ -31,7 +34,6 @@ def get_error():
     else:
         return None, GL_NO_ERROR
 
-from libc.stdio cimport printf
 
 cdef void check_error(const char *function) nogil:
 
@@ -46,18 +48,42 @@ cdef void check_error(const char *function) nogil:
         error_function = function
         error_code = error
 
-cdef class pointer_wrapper:
+cdef class ptr:
+    """
+    This is a class that wraps a generic contiguous Python buffer, and
+    allows the retrieval of a pointer to that buffer.
+    """
 
     cdef void *ptr
+    cdef Py_buffer view
 
-    def __cinit__(self, o):
-        ptr = NULL
+    def __init__(self, o, ro=True):
+        PyObject_GetBuffer(o, &self.view, PyBUF_CONTIG_RO if ro else PyBUF_CONTIG)
+        self.ptr = self.view.buf
+
+    def __dealloc__(self):
+        PyBuffer_Release(&self.view)
+
+cdef ptr get_ptr(o):
+    """
+    If o is a ptr, return it. Otherwise, convert the buffer into a ptr, and
+    return that.
+    """
+
+    if isinstance(o, ptr):
+        return o
+    else:
+        return ptr(o)
 
 cdef object proxy_return_string(const GLubyte *s):
+    """
+    This is used for string return values. It returns the return value as
+    a python string if it's not NULL, or None if it's null.
+    """
+
+    if s == NULL:
+        return None
 
     cdef const char *ss = <const char *> s
+    return ss
 
-    if ss:
-        return ss
-    else:
-        return None

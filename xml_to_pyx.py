@@ -352,13 +352,13 @@ class XMLToPYX:
 
             for param, type_ in params:
                 if "*" in type_:
-                    w(f"    cdef pointer_wrapper {param}_wrapped = pointer_wrapper({param})")
+                    w(f"    cdef ptr {param}_ptr = get_ptr({param})")
 
             proxy = [ ]
 
             for param, type_ in params:
                 if "*" in type_:
-                    proxy.append(f"<{type_}> {param}_wrapped.ptr")
+                    proxy.append(f"<{type_}> {param}_ptr.ptr")
                 else:
                     proxy.append(param)
 

@@ -70,3 +70,12 @@ def test_checking(context):
     gl.reset_error()
 
     assert gl.get_error() == NO_ERROR
+
+
+def test_good_ptr():
+    gl.ptr(b'Mystring.')
+
+
+def test_bad_ptr():
+    with pytest.raises(TypeError):
+        gl.ptr(42)

@@ -29,8 +29,10 @@ def snarf(fn):
         return f.read() + "\n"
 
 
-PXD_HEADER = snarf("pxd_header.pxd")
-PYX_HEADER = snarf("pyx_header.pyx")
+UGUUGL_PXD_HEADER = snarf("uguugl_pxd_header.pxd")
+UGUUGL_PYX_HEADER = snarf("uguugl_pyx_header.pyx")
+UGUU_PYX_HEADER = snarf("uguugl_pyx_header.pyx")
+
 
 GL_FEATURES = [
     "GL_VERSION_1_0",
@@ -150,11 +152,11 @@ class XMLToPYX:
         self.find_features()
         self.select_features()
 
-        with open("gl.pxd", "w") as f:
-            self.generate_pxd(f)
+        with open("gen/uguugl.pxd", "w") as f:
+            self.generate_uguugl_pxd(f)
 
-        with open("gl.pyx", "w") as f:
-            self.generate_pyx(f)
+        with open("gen/uguugl.pyx", "w") as f:
+            self.generate_uguugl_pyx(f)
 
     def convert_types(self):
         types = self.root.find('types')
@@ -251,9 +253,9 @@ class XMLToPYX:
 
         self.features = f
 
-    def generate_pxd(self, f):
+    def generate_uguugl_pxd(self, f):
 
-        f.write(PXD_HEADER)
+        f.write(UGUUGL_PXD_HEADER)
 
         def w(s):
             f.write(s + "\n")
@@ -280,9 +282,9 @@ class XMLToPYX:
             w(c.typedef(typename))
             w(f"cdef {typename} {i}")
 
-    def generate_pyx(self, f):
+    def generate_uguugl_pyx(self, f):
 
-        f.write(PYX_HEADER)
+        f.write(UGUUGL_PYX_HEADER)
 
         def w(s):
             f.write(s + "\n")

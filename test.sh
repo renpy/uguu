@@ -3,9 +3,22 @@
 set -e
 
 python3 xml_to_pyx.py
-cython gl.pyx
-cython testsupport.pyx
+cp testsupport.pyx gen
+cp sdl2.pxd gen
+cp renpygl.h gen
 
-python3 setup.py build_ext -i -q
-python3 -m pytest "$@"
+pushd gen
+cython uguugl.pyx
+cython testsupport.pyx
+popd
+
+export CC="ccache gcc"
+export LD="ccache ld"
+
+python3 setup.py build_ext -q
+
+PYTHONVERSION=$(python3 -c 'import sysconfig; print(sysconfig.get_platform() + "-" + sysconfig.get_python_version())')
+export PYTHONPATH="build/lib.$PYTHONVERSION"
+
+python3 "$@"
 

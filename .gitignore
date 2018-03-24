@@ -1,9 +1,10 @@
 *.so
-gl.c
-gl.pyx
-gl.pxd
+uguugl.c
+uguugl.pyx
+uguugl.pxd
 testsupport.c
 build
+gen
 
 .project
 .pydevproject

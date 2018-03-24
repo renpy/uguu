@@ -1,4 +1,4 @@
-import gl
+import uguugl as gl
 import testsupport
 import pytest
 

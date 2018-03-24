@@ -4,8 +4,6 @@ from libc.stdio cimport printf
 import argparse
 
 from sdl2 cimport *
-cimport gl
-
 
 cdef class SDL:
 
@@ -57,18 +55,4 @@ cdef class SDL:
 
             if event.type == SDL_QUIT:
                 return
-
-
-GL_VERSION = gl.GL_VERSION
-GL_TEXTURE_2D = gl.GL_TEXTURE_2D
-
-def glGetString(n):
-    cdef const char *rv
-
-    rv = <const char *> gl.glGetString(n)
-
-    if rv:
-        return rv
-    else:
-        return None
 

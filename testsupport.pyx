@@ -47,12 +47,16 @@ cdef class SDL:
         SDL_GL_DeleteContext(self.glc)
         SDL_DestroyWindow(self.window)
 
-    def wait_quit(self):
+    def loop(self):
 
         cdef SDL_Event event
 
-        if SDL_WaitEventTimeout(&event, 200):
+        SDL_GL_SwapWindow(self.window)
+
+        while SDL_PollEvent(&event):
 
             if event.type == SDL_QUIT:
-                return
+                return False
+
+        return True
 

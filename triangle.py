@@ -5,15 +5,19 @@ from uguu import *
 
 VERTEX_SHADER = b"""\
 attribute vec4 vPosition;
+attribute vec3 vColor;
+varying vec3 fColor;
 void main() {
+    fColor = vColor;
     gl_Position = vPosition;
 }
 """
 
 FRAGMENT_SHADER = b"""\
 precision mediump float;
+varying vec3 fColor;
 void main() {
-    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    gl_FragColor = vec4(fColor.r, fColor.g, fColor.b, 1.0);
 }
 """
 
@@ -68,6 +72,7 @@ def main():
     glAttachShader(program, fragment)
 
     glBindAttribLocation(program, 0, b"vPosition")
+    glBindAttribLocation(program, 1, b"vColor")
 
     glLinkProgram(program)
 
@@ -88,14 +93,23 @@ def main():
 
         glUseProgram(program)
 
-        vertices = [ 0.0, 0.5, 0.0,
-                     -0.5, -0.5, 0.0,
-                     0.5, -0.5, 0.0, ]
+        vertices = [ 0.0, 0.9, 0.0,
+                     -0.9, -0.9, 0.0,
+                     0.9, -0.9, 0.0, ]
+
+        colors = [ 1.0, 0.0, 0.0,
+                   0.0, 1.0, 0.0,
+                   0.0, 0.0, 1.0, ]
 
         verticesptr = ptr(FloatBuffer(vertices))
 
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, verticesptr)
         glEnableVertexAttribArray(0)
+
+        colorsptr = ptr(FloatBuffer(colors))
+
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, colorsptr)
+        glEnableVertexAttribArray(1)
 
         glDrawArrays(GL_TRIANGLES, 0, 3)
 

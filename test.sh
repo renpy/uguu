@@ -8,6 +8,7 @@ cp sdl2.pxd gen
 cp renpygl.h gen
 
 pushd gen
+cython uguu.pyx
 cython uguugl.pyx
 cython testsupport.pyx
 popd

@@ -31,7 +31,7 @@ def snarf(fn):
 
 UGUUGL_PXD_HEADER = snarf("uguugl_pxd_header.pxd")
 UGUUGL_PYX_HEADER = snarf("uguugl_pyx_header.pyx")
-UGUU_PYX_HEADER = snarf("uguugl_pyx_header.pyx")
+UGUU_PYX_HEADER = snarf("uguu_pyx_header.pyx")
 
 
 GL_FEATURES = [
@@ -133,6 +133,7 @@ class XMLToPYX:
         self.root = parse("gl.xml").getroot()
 
         self.types = [ ]
+        self.type_names = [ ]
 
         self.convert_types()
 
@@ -158,6 +159,9 @@ class XMLToPYX:
         with open("gen/uguugl.pyx", "w") as f:
             self.generate_uguugl_pyx(f)
 
+        with open("gen/uguu.pyx", "w") as f:
+            self.generate_uguu_pyx(f)
+
     def convert_types(self):
         types = self.root.find('types')
 
@@ -172,6 +176,8 @@ class XMLToPYX:
             name = name.text
             if name in BAD_TYPES:
                 continue
+
+            self.type_names.append(name)
 
             text  = "".join(t.itertext())
 
@@ -338,11 +344,19 @@ class XMLToPYX:
             w(f"    global {i}")
             w(f"    {i} = check_{i}")
 
-        # Generate the proxies.
+    def generate_uguu_pyx(self, f):
+
+        def w(s):
+            f.write(s + "\n")
+
+        for l in self.type_names:
+            w(f"from uguugl cimport {l}")
 
         w(f'')
-        w(f'g = globals()')
-        w(f'')
+        f.write(UGUU_PYX_HEADER)
+
+        for l in self.type_names:
+            w(f"from uguugl cimport {l}")
 
         for i in sorted(self.features.commands):
             c = self.commands[i]
@@ -350,7 +364,8 @@ class XMLToPYX:
             params = list(zip(c.parameters, c.parameter_types))
             param_list = ", ".join(c.parameters)
 
-            w(f"def proxy_{i}({param_list}):")
+            w(f'')
+            w(f"def {i}({param_list}):")
 
             for param, type_ in params:
                 if "*" in type_:
@@ -369,15 +384,11 @@ class XMLToPYX:
             rt = c.return_type.strip()
 
             if rt == "void":
-                w(f'    {i}({proxy})')
+                w(f'    uguugl.{i}({proxy})')
             elif rt == "const GLubyte *":
-                w(f'    return proxy_return_string({i}({proxy}))')
+                w(f'    return proxy_return_string(uguugl.{i}({proxy}))')
             else:
-                w(f'    return {i}({proxy})')
-
-            w(f'')
-            w(f'g["{i}"] = proxy_{i}')
-            w(f'')
+                w(f'    return uguugl.{i}({proxy})')
 
         # Expose the enums to python.
 
@@ -387,10 +398,7 @@ class XMLToPYX:
         w(f'')
 
         for i in enums:
-            w(f'g["{i}"] = {i}')
-
-        w(f'')
-        w(f'del g')
+            w(f'{i} = uguugl.{i}')
 
 
 if __name__ == "__main__":

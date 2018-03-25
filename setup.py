@@ -1,5 +1,12 @@
 from distutils.core import Extension, setup
 
+uguu = Extension(
+    "uguu",
+    ["gen/uguu.c" ],
+    libraries=[ "SDL2", ],
+    include_dirs=[ "/usr/include/SDL2" ],
+    )
+
 uguugl = Extension(
     "uguugl",
     ["gen/uguugl.c" ],
@@ -16,5 +23,5 @@ testsupport = Extension(
 
 setup(
     name='uguu',
-    ext_modules=[ uguugl, testsupport ],
+    ext_modules=[ uguu, uguugl, testsupport ],
 )

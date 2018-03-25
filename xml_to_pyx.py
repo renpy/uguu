@@ -273,7 +273,7 @@ class XMLToPYX:
             w(f"    {l}")
 
         enums = list(self.features.enums)
-        enums.sort(key=lambda n : int(self.enums[n], 0))
+        enums.sort(key=lambda n : (int(self.enums[n], 0), n))
 
         w(f'')
 
@@ -328,6 +328,7 @@ class XMLToPYX:
 
             names = list(self.commands[i].aliases)
             names.remove(i)
+            names.sort()
             names.insert(0, i)
 
             names = [ i.encode("utf-8") for i in names ]
@@ -393,7 +394,7 @@ class XMLToPYX:
         # Expose the enums to python.
 
         enums = list(self.features.enums)
-        enums.sort(key=lambda n : int(self.enums[n], 0))
+        enums.sort(key=lambda n : (int(self.enums[n], 0), n))
 
         w(f'')
 

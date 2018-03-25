@@ -133,7 +133,7 @@ cdef class IntBuffer(Buffer):
 
     def __init__(self, value):
 
-        self.setup_buffer(len(value), sizeof(int), "I", 0)
+        self.setup_buffer(len(value), sizeof(int), "i", 0)
 
         cdef int i
 
@@ -145,4 +145,21 @@ cdef class IntBuffer(Buffer):
             raise IndexError("index out of range")
 
         return (<int*> self.data)[index]
+
+cdef class FloatBuffer(Buffer):
+
+    def __init__(self, value):
+
+        self.setup_buffer(len(value), sizeof(float), "f", 0)
+
+        cdef int i
+
+        for 0 <= i < self.length:
+            (<float *> self.data)[i] = <float> value[i]
+
+    def __getitem__(self, index):
+        if index < 0 or index >= self.length:
+            raise IndexError("index out of range")
+
+        return (<float *> self.data)[index]
 

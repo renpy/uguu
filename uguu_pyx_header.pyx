@@ -48,39 +48,71 @@ cdef ptr get_ptr(o):
     else:
         return ptr(o)
 
-cdef class BytesListBuffer:
+cdef class Buffer:
+    """
+    The base class for all buffers.
+    """
 
-    cdef object value
     cdef Py_ssize_t length
     cdef Py_ssize_t itemsize
     cdef const char *format
-    cdef const char **data
+    cdef void *data
+    cdef int readonly
 
-    def __init__(self, value):
-        self.value = [ ptr(v) for v in value ]
-        self.length = len(value)
-        self.itemsize = sizeof(const char *)
-        self.format = "P"
-        self.data = <const char **> calloc(self.length, self.itemsize)
+    cdef setup_buffer(self, Py_ssize_t length, Py_ssize_t itemsize, const char *format, int readonly):
+        """
+        This is called by a specific buffer's init method to set up various fields, and especially
+        allocate the data field.
 
-        cdef int i
+        `length`
+            The number of items in this buffer.
+        `itemsize`
+            The size of a single item.
+        `format`
+            The struct-style format code.
+        `readonly`
+            1 if readonly, 0 if read-write.
+        """
 
-        for 0 <= i < self.length:
-            self.data[i] = <const char *> (<ptr> value[i]).ptr
+        self.length = length
+        self.itemsize = itemsize
+        self.format = format
+        self.readonly = readonly
+        self.data = calloc(self.length, self.itemsize)
 
     def __getbuffer__(self, Py_buffer *buffer, int flags):
 
-        buffer.buf = &self.data[0]
+        buffer.buf = self.data
         buffer.format = self.format
         buffer.internal = NULL
         buffer.itemsize = self.itemsize
         buffer.len = self.length * self.itemsize
         buffer.ndim = 1
         buffer.obj = self
-        buffer.readonly = 1
+        buffer.readonly = self.readonly
         buffer.shape = &self.length
         buffer.strides = &self.itemsize
         buffer.suboffsets = NULL
 
     def __releasebuffer__(self, Py_buffer *buffer):
         pass
+
+    def __dealloc__(self):
+        if self.data:
+            free(self.data)
+            self.data = NULL
+
+
+cdef class BytesListBuffer(Buffer):
+    cdef object value
+
+    def __init__(self, value):
+        self.value = [ ptr(v) for v in value ]
+
+        self.setup_buffer(len(value), sizeof(const char *), "P", 1)
+
+        cdef int i
+
+        for 0 <= i < self.length:
+            (<const char **> self.data)[i] = <const char *> (<ptr> value[i]).ptr
+

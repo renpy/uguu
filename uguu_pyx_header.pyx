@@ -108,6 +108,14 @@ cdef class Buffer:
             free(self.data)
             self.data = NULL
 
+cdef class BytesBuffer(Buffer):
+
+    def __init__(self, length):
+
+        self.setup_buffer(length, 1, "B", 0)
+
+    def get(self):
+        return bytes(<char *> self.data)
 
 cdef class BytesListBuffer(Buffer):
     cdef object value

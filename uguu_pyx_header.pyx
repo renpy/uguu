@@ -31,11 +31,17 @@ cdef class ptr:
     cdef Py_buffer view
 
     def __init__(self, o, ro=True):
+        if o is None:
+            self.ptr = NULL
+            return
+
         PyObject_GetBuffer(o, &self.view, PyBUF_CONTIG_RO if ro else PyBUF_CONTIG)
         self.ptr = self.view.buf
 
     def __dealloc__(self):
-        PyBuffer_Release(&self.view)
+        if self.ptr:
+            PyBuffer_Release(&self.view)
+            self.ptr = NULL
 
 cdef ptr get_ptr(o):
     """
@@ -108,11 +114,27 @@ cdef class BytesListBuffer(Buffer):
 
     def __init__(self, value):
         self.value = [ ptr(v) for v in value ]
-
         self.setup_buffer(len(value), sizeof(const char *), "P", 1)
 
         cdef int i
 
         for 0 <= i < self.length:
-            (<const char **> self.data)[i] = <const char *> (<ptr> value[i]).ptr
+            (<const char **> self.data)[i] = <const char *> (<ptr> self.value[i]).ptr
+
+cdef class IntBuffer(Buffer):
+
+    def __init__(self, value):
+
+        self.setup_buffer(len(value), sizeof(int), "I", 0)
+
+        cdef int i
+
+        for 0 <= i < self.length:
+            (<int*> self.data)[i] = <int> value[i]
+
+    def __getitem__(self, index):
+        if index < 0 or index >= self.length:
+            raise IndexError("index out of range")
+
+        return (<int*> self.data)[index]
 

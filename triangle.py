@@ -13,8 +13,10 @@ void main() {
 }
 """
 
+# precision mediump float;
+
+
 FRAGMENT_SHADER = b"""\
-precision mediump float;
 varying vec3 fColor;
 void main() {
     gl_FragColor = vec4(fColor.r, fColor.g, fColor.b, 1.0);
@@ -30,24 +32,24 @@ def load_shader(shader_type, source):
 
     shader = glCreateShader(shader_type)
 
-    sourceptr = ptr(BytesListBuffer([ source ]))
-    lengthsptr = ptr(IntBuffer([ len(source) ]))
+    sourceptr = ptr(strings, source)
+    lengthsptr = ptr(int, len(source))
 
     glShaderSource(shader, 1, sourceptr, lengthsptr)
     glCompileShader(shader)
 
-    status = IntBuffer([ 0 ])
+    status = ptr(int)
     glGetShaderiv(shader, GL_COMPILE_STATUS, status)
 
-    if status[0] == GL_FALSE:
+    if status.value == GL_FALSE:
 
-        logLength = IntBuffer([ 0 ])
+        logLength = ptr(int)
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, logLength)
 
-        log = BytesBuffer(logLength[0])
-        glGetShaderInfoLog(shader, logLength[0], None, log)
+        log = ptr(byte, count=logLength.value)
+        glGetShaderInfoLog(shader, logLength.value, None, log)
+        raise ShaderError(log.bytes.decode("utf-8"))
 
-        raise ShaderError(log.get().decode("utf-8"))
 
     return shader
 
@@ -76,9 +78,9 @@ def main():
 
     glLinkProgram(program)
 
-    status = IntBuffer([ 0 ])
+    status = ptr(int)
     glGetProgramiv(program, GL_LINK_STATUS, status)
-    print("Status:", status[0])
+    print("Status:", status.value)
 
     glClearColor(0.0, 0.0, 0.0, 1.0)
 
@@ -101,12 +103,12 @@ def main():
                    0.0, 1.0, 0.0,
                    0.0, 0.0, 1.0, ]
 
-        verticesptr = ptr(FloatBuffer(vertices))
+        verticesptr = ptr(float, vertices)
 
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, verticesptr)
         glEnableVertexAttribArray(0)
 
-        colorsptr = ptr(FloatBuffer(colors))
+        colorsptr = ptr(float, colors)
 
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, colorsptr)
         glEnableVertexAttribArray(1)

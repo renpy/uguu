@@ -21,39 +21,6 @@ cdef object proxy_return_string(const GLubyte *s):
     return ss
 
 
-cdef class ptr:
-    """
-    This is a class that wraps a generic contiguous Python buffer, and
-    allows the retrieval of a pointer to that buffer.
-    """
-
-    cdef void *ptr
-    cdef Py_buffer view
-
-    def __init__(self, o, ro=True):
-        if o is None:
-            self.ptr = NULL
-            return
-
-        PyObject_GetBuffer(o, &self.view, PyBUF_CONTIG_RO if ro else PyBUF_CONTIG)
-        self.ptr = self.view.buf
-
-    def __dealloc__(self):
-        if self.ptr:
-            PyBuffer_Release(&self.view)
-            self.ptr = NULL
-
-cdef ptr get_ptr(o):
-    """
-    If o is a ptr, return it. Otherwise, convert the buffer into a ptr, and
-    return that.
-    """
-
-    if isinstance(o, ptr):
-        return o
-    else:
-        return ptr(o)
-
 cdef class Buffer:
     """
     The base class for all buffers.
@@ -108,26 +75,47 @@ cdef class Buffer:
             free(self.data)
             self.data = NULL
 
+    def bytes(self):
+        raise TypeError("{} does not support .bytes.".format(self.__class__.__name__))
+
+
 cdef class BytesBuffer(Buffer):
 
-    def __init__(self, length):
+    def __init__(self, value):
 
-        self.setup_buffer(length, 1, "B", 0)
+        self.setup_buffer(len(value), 1, "B", 0)
 
-    def get(self):
-        return bytes(<char *> self.data)
+        cdef int i
+
+        for 0 <= i < self.length:
+            (<char *> self.data)[i] = <char> value[i]
+
+    def bytes(self):
+        return (<char *> self.data)[0:self.length]
+
+    def __getitem__(self, index):
+        if index < 0 or index >= self.length:
+            raise IndexError("index out of range")
+
+        return (<char *> self.data)[index]
+
 
 cdef class BytesListBuffer(Buffer):
-    cdef object value
+    cdef object pyvalue
+    cdef object ptrs
 
     def __init__(self, value):
-        self.value = [ ptr(v) for v in value ]
+        self.pyvalue = value
+        self.ptrs = [ ptr(v) for v in value ]
         self.setup_buffer(len(value), sizeof(const char *), "P", 1)
 
         cdef int i
 
         for 0 <= i < self.length:
-            (<const char **> self.data)[i] = <const char *> (<ptr> self.value[i]).ptr
+            (<const char **> self.data)[i] = <const char *> (<ptr> self.ptrs[i]).ptr
+
+    def __getitem__(self, index):
+        return self.value[index]
 
 cdef class IntBuffer(Buffer):
 
@@ -138,13 +126,13 @@ cdef class IntBuffer(Buffer):
         cdef int i
 
         for 0 <= i < self.length:
-            (<int*> self.data)[i] = <int> value[i]
+            (<int *> self.data)[i] = <int> value[i]
 
     def __getitem__(self, index):
         if index < 0 or index >= self.length:
             raise IndexError("index out of range")
 
-        return (<int*> self.data)[index]
+        return (<int *> self.data)[index]
 
 cdef class FloatBuffer(Buffer):
 
@@ -163,3 +151,93 @@ cdef class FloatBuffer(Buffer):
 
         return (<float *> self.data)[index]
 
+# Types for pointers.
+byte = object()
+strings = object()
+
+
+# A map from the type to the buffer.
+TYPE_BUFFERS = {
+    byte : BytesBuffer,
+    float : FloatBuffer,
+    int : IntBuffer,
+    strings : BytesListBuffer,
+}
+
+
+
+# Note: We need to do a bit of indirection here, so that the object doesn't
+# have a pointer to itself that would cause the GC to run. That's why we have
+# the ptr as one object and the Buffer as a second object.
+
+
+cdef class ptr:
+    """
+    This returns an object that serves as a pointer a Python buffer.
+
+    `kind`
+        If None, makes a NULL pointer. Otherwise, the type of the
+        buffer to create.
+
+    `value`
+        The default value of the contents of the buffer. If this is
+        a list, it's used directly. Otherwise, it's put into a list
+        of `count` items and used to create the buffer.
+
+    """
+
+    cdef object buffer
+    cdef void *ptr
+    cdef Py_buffer view
+
+    def __init__(self, kind, value=0, count=1):
+
+        if kind is None:
+            self.buffer = None
+            self.ptr = NULL
+            return
+
+        buffer_type = TYPE_BUFFERS.get(kind, None)
+
+        if buffer_type:
+
+            if not isinstance(value, list):
+                value = [ value ] * count
+
+            self.buffer = buffer_type(value)
+            ro = False
+
+        else:
+            self.buffer = kind
+            ro = True
+
+        if PyObject_GetBuffer(self.buffer, &self.view, PyBUF_CONTIG_RO if ro else PyBUF_CONTIG) == 0:
+            self.ptr = self.view.buf
+
+    def __dealloc__(self):
+        if self.ptr:
+            PyBuffer_Release(&self.view)
+            self.ptr = NULL
+
+    def __getitem__(self, index):
+        return self.buffer[index]
+
+    @property
+    def value(self):
+        return self.buffer[0]
+
+    @property
+    def bytes(self):
+        return self.buffer.bytes()
+
+
+cdef ptr get_ptr(o):
+    """
+    If o is a ptr, return it. Otherwise, convert the buffer into a ptr, and
+    return that.
+    """
+
+    if isinstance(o, ptr):
+        return o
+    else:
+        return ptr(o)

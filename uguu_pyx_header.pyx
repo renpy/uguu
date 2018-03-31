@@ -201,6 +201,9 @@ cdef class ptr:
 
         if buffer_type:
 
+            if isinstance(value, ptr):
+                raise Exception("The second argument to ptr can't be a ptr.")
+
             if not isinstance(value, list):
                 value = [ value ] * count
 

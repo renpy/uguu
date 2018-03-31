@@ -1,7 +1,6 @@
 from sdl2 cimport SDL_GL_GetProcAddress
 
-cdef void *find_gl_command(names):
-
+cdef void *find_gl_command(names) except NULL:
     cdef void *rv = NULL
 
     for i in names:
